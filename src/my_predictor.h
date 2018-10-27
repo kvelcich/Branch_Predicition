@@ -16,7 +16,7 @@ public:
 	my_update u;
 	branch_info bi;
 	unsigned int history;
-	unsigned char tab[1<<TABLE_BITS];
+	int tab[1<<TABLE_BITS];
 
 	my_predictor (void) : history(0) {
 		memset (tab, 0, sizeof (tab));
@@ -26,7 +26,9 @@ public:
 		bi = b;
 		if (b.br_flags & BR_CONDITIONAL) {
 			u.index = history;
-			u.direction_prediction (tab[u.index] >> 1);
+			int value = tab[u.index];
+			if (value > 1) u.direction_prediction (true);
+			else u.direction_prediction (false);
 		} else {
 			u.direction_prediction (true);
 		}
@@ -36,11 +38,15 @@ public:
 
 	void update (branch_update *u, bool taken, unsigned int target) {
 		if (bi.br_flags & BR_CONDITIONAL) {
-			unsigned char *c = &tab[((my_update*)u)->index];
+			int *c = &tab[((my_update*)u)->index];
 			if (taken) {
-				if (*c < 3) (*c)++;
+				if (*c == 0) *c = 1;
+				if (*c == 1) *c = 3;
+				if (*c == 2) *c = 3;
 			} else {
-				if (*c > 0) (*c)--;
+				if (*c == 1) *c = 0;
+				if (*c == 2) *c = 0;
+				if (*c == 3) *c = 2;
 			}
 			history <<= 1;
 			history |= taken;
