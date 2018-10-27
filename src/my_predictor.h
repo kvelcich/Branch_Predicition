@@ -18,17 +18,15 @@ public:
 	unsigned int history;
 	unsigned char tab[1<<TABLE_BITS];
 
-	my_predictor (void) : history(0) { 
+	my_predictor (void) : history(0) {
 		memset (tab, 0, sizeof (tab));
 	}
 
 	branch_update *predict (branch_info & b) {
 		bi = b;
 		if (b.br_flags & BR_CONDITIONAL) {
-			u.index = 
-				  (history << (TABLE_BITS - HISTORY_LENGTH)) 
-				^ (b.address & ((1<<TABLE_BITS)-1));
-			u.direction_prediction (tab[u.index] >> 1);	
+			u.index = history;
+			u.direction_prediction (tab[u.index] >> 1);
 		} else {
 			u.direction_prediction (true);
 		}
