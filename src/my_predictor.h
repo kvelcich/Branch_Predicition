@@ -11,21 +11,23 @@ public:
 
 class my_predictor : public branch_predictor {
 public:
-#define HISTORY_LENGTH	15
-#define TABLE_BITS	15
+#define TABLE_BITS 	15
 	my_update u;
 	branch_info bi;
 	unsigned int history;
-	int tab[1<<TABLE_BITS];
+	int tab[1 << TABLE_BITS];
 
 	my_predictor (void) : history(0) {
-		memset (tab, 0, sizeof (tab));
+		// memset (tab, 0, sizeof (tab));
+		for (int i = 0; i < (1 << TABLE_BITS); i++) {
+			tab[i] = 2;
+		}
 	}
 
 	branch_update *predict (branch_info & b) {
 		bi = b;
 		if (b.br_flags & BR_CONDITIONAL) {
-			u.index = history;
+			u.index = b.address & ((1 << TABLE_BITS) - 1);
 			int value = tab[u.index];
 			if (value > 1) u.direction_prediction (true);
 			else u.direction_prediction (false);
@@ -41,16 +43,13 @@ public:
 			int *c = &tab[((my_update*)u)->index];
 			if (taken) {
 				if (*c == 0) *c = 1;
-				if (*c == 1) *c = 3;
-				if (*c == 2) *c = 3;
+				else if (*c == 1) *c = 3;
+				else if (*c == 2) *c = 3;
 			} else {
 				if (*c == 1) *c = 0;
-				if (*c == 2) *c = 0;
-				if (*c == 3) *c = 2;
+				else if (*c == 2) *c = 0;
+				else if (*c == 3) *c = 2;
 			}
-			history <<= 1;
-			history |= taken;
-			history &= (1<<HISTORY_LENGTH)-1;
 		}
 	}
 };
